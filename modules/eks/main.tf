@@ -1,14 +1,12 @@
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.eks_cluster.arn
+  role_arn = var.cluster_role_arn
   
   vpc_config {
-    subnet_ids = var.subnet_ids
+    subnet_ids = flatten([
+      for subnet_type, subnet_ids in var.private_subnet_ids_by_type : subnet_ids
+    ])
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy
-  ]
 }
 
 resource "aws_eks_node_group" "main" {
@@ -16,24 +14,44 @@ resource "aws_eks_node_group" "main" {
 
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = each.key
-  node_role_arn   = aws_iam_role.eks_node_group.arn
-  subnet_ids      = var.subnet_ids
+  node_role_arn   = var.node_group_role_arns[each.key]
+  subnet_ids      = var.private_subnet_ids_by_type[each.value.subnet_type]
 
-  ami_type       = each.value.ami_id
-  instance_types = [each.value.instance_type]
-  disk_size      = each.value.disk_size
+  instance_types = [each.value.node_group.instance_type]
+  ami_type       = each.value.node_group.ami_id
+  capacity_type  = each.value.node_group.capacity_type
+  disk_size      = each.value.node_group.disk_size
 
   scaling_config {
-    desired_size = each.value.desired_size
-    max_size     = each.value.max_size
-    min_size     = each.value.min_size
+    desired_size = each.value.node_group.scaling_config.desired_size
+    max_size     = each.value.node_group.scaling_config.max_size
+    min_size     = each.value.node_group.scaling_config.min_size
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_node_group_policy
-  ]
-
-  tags = {
-    Environment = var.environment
+  dynamic "taint" {
+    for_each = each.value.node_group.taints
+    content {
+      key    = taint.value.key
+      value  = taint.value.value
+      effect = taint.value.effect
+    }
   }
+
+  labels = merge(
+    each.value.node_group.labels,
+    {
+      "eks.amazonaws.com/nodegroup" = each.key
+    }
+  )
+
+  tags = merge(
+    each.value.node_group.tags,
+    {
+      Environment = var.environment
+      ManagedBy   = "terraform"
+      NodeGroup   = each.key
+    }
+  )
+
+  depends_on = [aws_eks_cluster.main]
 }

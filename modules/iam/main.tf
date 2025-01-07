@@ -15,12 +15,10 @@ resource "aws_iam_role" "eks_cluster" {
     ]
   })
 
-  tags = merge(
-    var.tags,
-    {
-      "Name" = "${var.cluster_name}-cluster-role"
+  tags = {
+      Name = "${var.cluster_name}-cluster-role"
     }
-  )
+  
 }
 
 # Attach required policies to cluster role
@@ -34,17 +32,6 @@ resource "aws_iam_role_policy_attachment" "eks_vpc_resource_controller" {
   role       = aws_iam_role.eks_cluster.name
 }
 
-# Custom cluster policy for additional permissions
-resource "aws_iam_role_policy" "eks_cluster_custom" {
-  count = length(var.custom_cluster_policies) > 0 ? 1 : 0
-  name  = "${var.cluster_name}-custom-policy"
-  role  = aws_iam_role.eks_cluster.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = var.custom_cluster_policies
-  })
-}
 
 # Node Group Role
 resource "aws_iam_role" "eks_node_group" {
@@ -63,12 +50,9 @@ resource "aws_iam_role" "eks_node_group" {
     ]
   })
 
-  tags = merge(
-    var.tags,
-    {
+  tags = {
       "Name" = "${var.cluster_name}-node-role"
     }
-  )
 }
 
 # Attach required policies to node role

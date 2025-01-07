@@ -1,21 +1,25 @@
-project_name        = "my-eks"
+# EKS
+project_name        = "thong-eks"
 environment         = "dev"
 region              = "ap-southeast-1"
+
+# Namespace
+namespaces = ["web-app", "backend", "model-serving", "logging-tracing", "metrics-monitoring"]
 
 # VPC
 vpc_cidr            = "10.0.0.0/16"
 availability_zones  = ["ap-southeast-1a", "ap-southeast-1b"]
-public_subnet_cidrs = {
-  app = {
-    name  = "app"
-    cidrs =["10.0.0.0/22", "10.0.4.0/22"]
-  }
+public_subnets = {
   load-balancer = {
     name  = "load-balancer"
-    cidrs =["10.0.8.0/22", "10.0.12.0/22"]
+    cidrs =["10.0.0.0/22", "10.0.4.0/22"]
   }
 }
-private_subnet_cidrs = {
+private_subnets = {
+  app = {
+    name  = "app"
+    cidrs =["10.0.8.0/22", "10.0.12.0/22"]
+  }
   backend = {
     name  = "backend"
     cidrs =["10.0.16.0/22", "10.0.20.0/22"]
