@@ -5,20 +5,24 @@ resource "aws_security_group" "this" {
   description = each.value.description
   vpc_id      = var.vpc_id
 
-  ingress {
-    from_port   = each.value.ingress.from_port
-    to_port     = each.value.ingress.to_port
-    protocol    = each.value.ingress.protocol
-    cidr_blocks = each.value.ingress.cidr_blocks
+  dynamic "ingress" {
+    for_each = each.value.ingress
+    content {
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+    }
   }
 
-  egress {
-    from_port   = each.value.egress.from_port
-    to_port     = each.value.egress.to_port
-    protocol    = each.value.egress.protocol
-    cidr_blocks = each.value.egress.cidr_blocks
+  dynamic "egress" {
+    for_each = each.value.egress
+    content {
+      from_port   = egress.value.from_port
+      to_port     = egress.value.to_port
+      protocol    = egress.value.protocol
+      cidr_blocks = egress.value.cidr_blocks
+    }
   }
-
-  tags = each.value.tags
 }
 
