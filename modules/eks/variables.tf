@@ -15,7 +15,7 @@ variable "node_groups" {
   type = map(object({
     subnet_type = string
     node_group = object({
-      instance_type   = list(string)
+      instance_types   = list(string)
       ami_type        = string
       capacity_type   = string
       disk_size       = number
@@ -31,11 +31,7 @@ variable "node_groups" {
         effect = string
       }))
       tags = map(string)
-      policies = map(list(object({
-        Effect   = string
-        Action   = list(string)
-        Resource = list(string)
-      })))
+      policies = list(string)
     })
   }))
 }
