@@ -1,5 +1,4 @@
 locals {
-  # Flatten policies for each service account
   service_account_policies = flatten([
     for sa_key, sa in var.service_accounts : [
       for policy_key, policy in sa.iam_role.policies : {
