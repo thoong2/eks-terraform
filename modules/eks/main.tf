@@ -3,9 +3,10 @@ resource "aws_eks_cluster" "main" {
   role_arn = var.cluster_role_arn
   
   vpc_config {
-    subnet_ids = flatten([
-      for subnet_type, subnet_ids in var.private_subnet_ids_by_type : subnet_ids
-    ])
+    subnet_ids = concat(
+      flatten([for subnet_ids in values(var.private_subnet_ids_by_type) : subnet_ids]),
+      flatten([for subnet_ids in values(var.public_subnet_ids_by_type) : subnet_ids])
+    )
   }
 }
 
@@ -17,8 +18,8 @@ resource "aws_eks_node_group" "main" {
   node_role_arn   = var.node_group_role_arns[each.key]
   subnet_ids      = var.private_subnet_ids_by_type[each.value.subnet_type]
 
-  instance_types = [each.value.node_group.instance_type]
-  ami_type       = each.value.node_group.ami_id
+  instance_types = each.value.node_group.instance_types
+  ami_type       = each.value.node_group.ami_type
   capacity_type  = each.value.node_group.capacity_type
   disk_size      = each.value.node_group.disk_size
 
