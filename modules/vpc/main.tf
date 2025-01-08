@@ -101,7 +101,8 @@ resource "aws_subnet" "private" {
 
 # Elastic IP for NAT Gateway
 resource "aws_eip" "nat" {
-  domain = "vpc"
+  # domain = "vpc"
+  vpc = true
 
   tags = {
     Name        = "${var.cluster_name}-nat-eip"
@@ -113,7 +114,7 @@ resource "aws_eip" "nat" {
 # NAT Gateway
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+  subnet_id     = aws_subnet.public["${local.public_subnet_config[0].subnet_key}-${local.public_subnet_config[0].az_index}"].id
 
   tags = {
     Name        = "${var.cluster_name}-nat"
@@ -156,13 +157,13 @@ resource "aws_route_table" "private" {
 
 # Route Table Associations
 resource "aws_route_table_association" "public" {
-  count          = length(aws_subnet.public)
-  subnet_id      = aws_subnet.public[count.index].id
+  for_each = aws_subnet.public
+  subnet_id = each.value.id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
+  for_each = aws_subnet.private
+  subnet_id = each.value.id
   route_table_id = aws_route_table.private.id
 }
